@@ -1,0 +1,4651 @@
+openapi: 3.0.3
+
+
+info:
+  title: RevU API
+  description: RevU API for businesses and customers.
+  version: 1.0.2
+
+servers:
+  - url: 'http://34.209.63.8:5000/api/v1'
+    description: Production
+  - url: 'http://localhost:5000/api/v1'
+    description: Development
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Login a user
+      tags:
+        - auth
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  $ref: '#/components/schemas/Role'
+                mobile:
+                  $ref: '#/components/schemas/Mobile'
+                password:
+                  $ref: '#/components/schemas/MediumText'
+                otp:
+                  $ref: '#/components/schemas/OTP'
+              required:
+                - role
+                - mobile
+            examples:
+              passwordLogin:
+                $ref: '#/components/examples/passwordLogin'
+              otpLogin:
+                $ref: '#/components/examples/otpLogin'
+      responses:
+        '201':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthToken'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /auth/otp:
+    post:
+      summary: Request an OTP
+      tags:
+        - auth
+      operationId: requestOTP
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  $ref: '#/components/schemas/Role'
+                mobile:
+                  $ref: '#/components/schemas/Mobile'
+              required:
+                - role
+                - mobile
+            examples:
+              requestOTP:
+                $ref: '#/components/examples/requestOTP'
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OTPData'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /auth/refresh:
+    get:
+      summary: Refresh token
+      tags:
+        - auth
+      operationId: refreshToken
+      responses:
+        '200':
+          description: New access token issued successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /files:
+    post:
+      summary: Create a file
+      tags:
+        - files
+      operationId: createFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  $ref: '#/components/schemas/MediumText'
+                type:
+                  allOf:
+                    - $ref: '#/components/schemas/FileType'
+                  default: image
+                file:
+                  type: string
+                  format: binary
+              required:
+                - title
+                - file
+            examples:
+              file:
+                $ref: '#/components/examples/file'
+      responses:
+        '201':
+          description: File created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/File'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get files list
+      tags:
+        - files
+      operationId: getFiles
+      parameters:
+        - name: type
+          description: Limit result set to specific type
+          in: query
+          schema:
+            $ref: '#/components/schemas/FileType'
+        - $ref: '#/components/parameters/mimeTypes'
+        - $ref: '#/components/parameters/paginationInclude'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated files list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/File'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete files
+      tags:
+        - files
+      operationId: deleteFiles
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Files deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /files/{id}:
+    get:
+      summary: Get a file
+      tags:
+        - files
+      operationId: getFile
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: File details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/File'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /files/collections:
+    post:
+      summary: Create a filesCollection
+      tags:
+        - filesCollections
+      operationId: createFilesCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilesCollection'
+            examples:
+              filesCollection:
+                $ref: '#/components/examples/filesCollection'
+      responses:
+        '201':
+          description: FilesCollection created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FilesCollection'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get filesCollections list
+      tags:
+        - filesCollections
+      operationId: getFilesCollections
+      parameters:
+        - $ref: '#/components/parameters/filesCollectionsIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated filesCollections list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FilesCollection'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete filesCollections
+      tags:
+        - filesCollections
+      operationId: deleteFilesCollections
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: FilesCollections deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /files/collections/{id}:
+    get:
+      summary: Get a filesCollection
+      tags:
+        - filesCollections
+      operationId: getFilesCollection
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: FilesCollection details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FilesCollection'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a filesCollection
+      tags:
+        - filesCollections
+      operationId: updateFilesCollection
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilesCollection'
+            examples:
+              filesCollection:
+                $ref: '#/components/examples/filesCollection'
+      responses:
+        '200':
+          description: FilesCollection updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FilesCollection'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /services/categories:
+    post:
+      summary: Create a serviceCategory
+      tags:
+        - serviceCategories
+      operationId: createServiceCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceCategory'
+            examples:
+              serviceCategory:
+                $ref: '#/components/examples/serviceCategory'
+      responses:
+        '201':
+          description: ServiceCategory created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ServiceCategory'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get serviceCategories list
+      tags:
+        - serviceCategories
+      operationId: getServiceCategories
+      parameters:
+        - $ref: '#/components/parameters/parentId'
+        - $ref: '#/components/parameters/applicableSex'
+        - $ref: '#/components/parameters/salonIds'
+        - $ref: '#/components/parameters/servicesIds'
+        - $ref: '#/components/parameters/serviceCategoryIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated serviceCategories list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceCategory'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete serviceCategories
+      tags:
+        - serviceCategories
+      operationId: deleteServiceCategories
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: ServiceCategories deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /services/categories/{id}:
+    get:
+      summary: Get a serviceCategory
+      tags:
+        - serviceCategories
+      operationId: getServiceCategory
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/childrenInclude'
+      responses:
+        '200':
+          description: ServiceCategory details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ServiceCategory'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /services:
+    post:
+      summary: Create a service
+      tags:
+        - services
+      operationId: createService
+      parameters:
+        - $ref: '#/components/parameters/serviceInclude'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+            examples:
+              service:
+                $ref: '#/components/examples/service'
+      responses:
+        '201':
+          description: Service created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get services list
+      tags:
+        - services
+      operationId: getServices
+      parameters:
+        - $ref: '#/components/parameters/applicableSex'
+        - $ref: '#/components/parameters/categoryIds'
+        - $ref: '#/components/parameters/serviceType'
+        - $ref: '#/components/parameters/serviceIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated services list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete services
+      tags:
+        - services
+      operationId: deleteServices
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Services deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /services/{id}:
+    get:
+      summary: Get a service
+      tags:
+        - services
+      operationId: getService
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/serviceInclude'
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /serviceableCities:
+    post:
+      summary: Create serviceableCities
+      tags:
+        - serviceableCities
+      operationId: createServiceableCities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ServiceableCity'
+            examples:
+              serviceableCities:
+                $ref: '#/components/examples/serviceableCities'
+      responses:
+        '201':
+          description: ServiceableCity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get serviceableCities list
+      tags:
+        - serviceableCities
+      operationId: getServiceableCities
+      responses:
+        '200':
+          description: Paginated serviceableCities list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceableCity'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete serviceableCities
+      tags:
+        - serviceableCities
+      operationId: deleteServiceableCities
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: ServiceableCities deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /serviceableCities/{id}:
+    get:
+      summary: Get a serviceableCity
+      tags:
+        - serviceableCities
+      operationId: getServiceableCity
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: ServiceableCity details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ServiceableCity'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /merchants:
+    post:
+      summary: Create a merchant
+      tags:
+        - merchants
+      operationId: createMerchant
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Merchant'
+            examples:
+              merchant:
+                $ref: '#/components/examples/merchant'
+      responses:
+        '201':
+          description: Merchant created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Merchant'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get merchants list
+      tags:
+        - merchants
+      operationId: getMerchants
+      parameters:
+        - $ref: '#/components/parameters/merchantIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated merchants list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Merchant'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete merchants
+      tags:
+        - merchants
+      operationId: deleteMerchants
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Merchants deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /merchants/{id}:
+    get:
+      summary: Get a merchant
+      tags:
+        - merchants
+      operationId: getMerchant
+      parameters:
+        - $ref: '#/components/parameters/idIncludingZero'
+        - $ref: '#/components/parameters/merchantInclude'
+      responses:
+        '200':
+          description: Merchant details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Merchant'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /salons:
+    post:
+      summary: Create a salon
+      tags:
+        - salons
+      operationId: createSalon
+      parameters:
+        - $ref: '#/components/parameters/salonInclude'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Salon'
+            examples:
+              salon:
+                $ref: '#/components/examples/salon'
+      responses:
+        '201':
+          description: Salon created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Salon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get salons list
+      tags:
+        - salons
+      operationId: getSalons
+      parameters:
+        - $ref: '#/components/parameters/applicableSex'
+        - $ref: '#/components/parameters/customerLatLong'
+        - $ref: '#/components/parameters/nearByDistance'
+        - name: city
+          description: Filter results to specific city
+          in: query
+          schema:
+            $ref: '#/components/schemas/ShortText'
+        - name: wishListedByCustomerId
+          description: Limit results to which are in wishlist for a customer id
+          in: query
+          schema:
+            $ref: '#/components/schemas/IntegerId'
+        - name: salonCategoriesCriteria
+          description: Limit results to matching salon category criteria
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SalonCategorizationCriteria'
+        - $ref: '#/components/parameters/servicesIds'
+        - $ref: '#/components/parameters/salonIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated salons list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Salon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete salons
+      tags:
+        - salons
+      operationId: deleteSalons
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Salons deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /salons/{id}:
+    get:
+      summary: Get a salon
+      tags:
+        - salons
+      operationId: getSalon
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/salonInclude'
+      responses:
+        '200':
+          description: Salon details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Salon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a salon
+      tags:
+        - salons
+      operationId: updateSalon
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/salonInclude'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalonUpdateBody'
+            examples:
+              salon:
+                $ref: '#/components/examples/salon'
+      responses:
+        '200':
+          description: Salon updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Salon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /salons/optedServices:
+    post:
+      summary: Create optedServices
+      tags:
+        - optedServices
+      operationId: createOptedServices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OptedService'
+              minItems: 1
+            examples:
+              optedServices:
+                $ref: '#/components/examples/optedServices'
+      responses:
+        '201':
+          description: OptedService created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OptedService'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get optedServices list
+      tags:
+        - optedServices
+      operationId: getOptedServices
+      parameters:
+        - $ref: '#/components/parameters/customerLatLong'
+        - $ref: '#/components/parameters/nearByDistance'
+        - $ref: '#/components/parameters/categoryIds'
+        - $ref: '#/components/parameters/salonIds'
+        - $ref: '#/components/parameters/designationIds'
+        - $ref: '#/components/parameters/applicableSex'
+        - $ref: '#/components/parameters/serviceType'
+        - $ref: '#/components/parameters/styles'
+        - $ref: '#/components/parameters/optedServiceIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated optedServices list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OptedService'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      summary: Update optedServices
+      description: |
+        Provide array of optedServices with all required fields of a particular salon.  
+        <br>
+        **Note**: While updating, optedServices which were present for a salon previously but not provided in the
+        update array will get deleted.
+      tags:
+        - optedServices
+      operationId: updateOptedServices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/OptedService'
+                  - type: object
+                    properties:
+                      service:
+                        readOnly: true
+      responses:
+        '200':
+          description: OptedService updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OptedService'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete optedServices
+      tags:
+        - optedServices
+      operationId: deleteOptedServices
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: OptedServices deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /salons/optedServices/{id}:
+    get:
+      summary: Get an optedService
+      tags:
+        - optedServices
+      operationId: getOptedService
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: OptedService details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OptedService'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update an optedService
+      tags:
+        - optedServices
+      operationId: updateOptedService
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/OptedServiceUpdateBody'
+                - type: object
+                  properties:
+                    service:
+                      readOnly: true
+      responses:
+        '200':
+          description: OptedService updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OptedService'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /salons/{id}/summary:
+    get:
+      summary: Get salon summary
+      tags:
+        - salonSummary
+      operationId: getSalonSummary
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/fromDate'
+        - $ref: '#/components/parameters/toDate'
+      responses:
+        '200':
+          description: Salon summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalonSummary'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /search:
+    get:
+      summary: Search salons and services
+      tags:
+        - search
+      operationId: searchSalonsServices
+      parameters:
+        - name: query
+          description: Search term for salon or service
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/MediumText'
+        - $ref: '#/components/parameters/applicableSex'
+        - name: city
+          description: Filter results to specific city
+          in: query
+          schema:
+            $ref: '#/components/schemas/ShortText'
+        - $ref: '#/components/parameters/searchInclude'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated list of Salons and Services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSearchResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /timeSlots:
+    post:
+      summary: Create a timeSlot
+      tags:
+        - timeSlots
+      operationId: createTimeSlot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+            examples:
+              timeSlot:
+                $ref: '#/components/examples/timeSlot'
+      responses:
+        '201':
+          description: TimeSlot created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TimeSlot'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get timeSlots list
+      tags:
+        - timeSlots
+      operationId: getTimeSlots
+      parameters:
+        - $ref: '#/components/parameters/salonId'
+        - $ref: '#/components/parameters/timeSlotAvailabilities'
+        - $ref: '#/components/parameters/optedServicesIds'
+        - $ref: '#/components/parameters/employeeIds'
+        - $ref: '#/components/parameters/paginationInclude'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated timeSlots list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TimeSlot'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete timeSlots
+      tags:
+        - timeSlots
+      operationId: deleteTimeSlots
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: TimeSlots deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /timeSlots/{id}:
+    get:
+      summary: Get a timeSlot
+      tags:
+        - timeSlots
+      operationId: getTimeSlot
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: TimeSlot details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TimeSlot'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /employees/designations:
+    post:
+      summary: Create an employeeDesignation
+      tags:
+        - employeeDesignations
+      operationId: createEmployeeDesignation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDesignation'
+            examples:
+              employeeDesignation:
+                $ref: '#/components/examples/employeeDesignation'
+      responses:
+        '201':
+          description: EmployeeDesignation created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmployeeDesignation'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get employeeDesignations list
+      tags:
+        - employeeDesignations
+      operationId: getEmployeeDesignations
+      parameters:
+        - $ref: '#/components/parameters/applicableSex'
+        - $ref: '#/components/parameters/paginationInclude'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated employeeDesignations list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EmployeeDesignation'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete employeeDesignations
+      tags:
+        - employeeDesignations
+      operationId: deleteEmployeeDesignations
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: EmployeeDesignations deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /employees/designations/{id}:
+    get:
+      summary: Get an employeeDesignation
+      tags:
+        - employeeDesignations
+      operationId: getEmployeeDesignation
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: EmployeeDesignation details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmployeeDesignation'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /employees:
+    post:
+      summary: Create an employee
+      tags:
+        - employees
+      operationId: createEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+            examples:
+              employee:
+                $ref: '#/components/examples/employee'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get employees list
+      tags:
+        - employees
+      operationId: getEmployees
+      parameters:
+        - $ref: '#/components/parameters/salonId'
+        - $ref: '#/components/parameters/designationIds'
+        - $ref: '#/components/parameters/employeeIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated employees list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete employees
+      tags:
+        - employees
+      operationId: deleteEmployees
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Employees deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /employees/{id}:
+    get:
+      summary: Get an employee
+      tags:
+        - employees
+      operationId: getEmployee
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Employee details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /customers:
+    post:
+      summary: Create a customer
+      tags:
+        - customers
+      operationId: createCustomer
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+            examples:
+              customer:
+                $ref: '#/components/examples/customer'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get customers list
+      tags:
+        - customers
+      operationId: getCustomers
+      parameters:
+        - $ref: '#/components/parameters/userIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated customers list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete customers
+      tags:
+        - customers
+      operationId: deleteCustomers
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Customers deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /customers/{id}:
+    get:
+      summary: Get a customer
+      tags:
+        - customers
+      operationId: getCustomer
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a customer
+      tags:
+        - customers
+      operationId: updateCustomer
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CustomerUpdateBody'
+                - type: object
+                  properties:
+                    wishListedSalonIds:
+                      type: object
+                      properties:
+                        add:
+                          $ref: '#/components/schemas/IntegerIds'
+                        remove:
+                          $ref: '#/components/schemas/IntegerIds'
+                      writeOnly: true
+            examples:
+              customer:
+                $ref: '#/components/examples/customerUpdate'
+      responses:
+        '201':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /appointments:
+    post:
+      summary: Create an appointment
+      tags:
+        - appointments
+      operationId: createAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Appointment'
+            examples:
+              appointment:
+                $ref: '#/components/examples/appointment'
+      responses:
+        '201':
+          description: Appointment created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get appointments list
+      tags:
+        - appointments
+      operationId: getAppointments
+      parameters:
+        - $ref: '#/components/parameters/fromDate'
+        - $ref: '#/components/parameters/toDate'
+        - $ref: '#/components/parameters/appointmentStatus'
+        - $ref: '#/components/parameters/salonId'
+        - $ref: '#/components/parameters/employeeId'
+        - $ref: '#/components/parameters/appointmentIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated appointments list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete appointments
+      tags:
+        - appointments
+      operationId: deleteAppointments
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Appointments deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /appointments/{id}:
+    get:
+      summary: Get an appointment
+      tags:
+        - appointments
+      operationId: getAppointment
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/appointmentInclude'
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update an appointment
+      tags:
+        - appointments
+      operationId: updateAppointment
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentUpdateBody'
+            examples:
+              appointment:
+                $ref: '#/components/examples/appointment'
+      responses:
+        '201':
+          description: Appointment created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders:
+    post:
+      summary: Create an order
+      tags:
+        - orders
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+            examples:
+              order:
+                $ref: '#/components/examples/order'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get orders list
+      tags:
+        - orders
+      operationId: getOrders
+      parameters:
+        - $ref: '#/components/parameters/fromDate'
+        - $ref: '#/components/parameters/toDate'
+        - name: appointmentId
+          description: Limit results to specific appointment id
+          in: query
+          schema:
+            $ref: '#/components/schemas/IntegerId'
+        - name: paymentStatus
+          description: Limit results to specific payment status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PaymentStatus'
+        - name: status
+          description: Limit results to specific status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - $ref: '#/components/parameters/orderIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated orders list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete orders
+      tags:
+        - orders
+      operationId: deleteOrders
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Orders deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders/{id}:
+    get:
+      summary: Get an order
+      tags:
+        - orders
+      operationId: getOrder
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/orderInclude'
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update an order
+      tags:
+        - orders
+      operationId: updateOrder
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUpdateBody'
+      responses:
+        '200':
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders/{id}/items:
+    post:
+      summary: Create an orderItem
+      tags:
+        - orderItems
+      operationId: createOrderItem
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+            examples:
+              orderItem:
+                $ref: '#/components/examples/orderItem'
+      responses:
+        '201':
+          description: OrderItem created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get orderItems list
+      tags:
+        - orderItems
+      operationId: getOrderItems
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/optedServicesIds'
+        - $ref: '#/components/parameters/employeeId'
+      responses:
+        '200':
+          description: Paginated orderItems list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      summary: Update orderItems
+      tags:
+        - orderItems
+      operationId: updateOrderItems
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+      responses:
+        '200':
+          description: OrderItems created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete orderItems
+      tags:
+        - orderItems
+      operationId: deleteOrderItems
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: OrderItems deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders/{orderId}/items/{id}:
+    get:
+      summary: Get an orderItem
+      tags:
+        - orderItems
+      operationId: getOrderItem
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/pathOrderId'
+      responses:
+        '200':
+          description: OrderItem details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update an orderItem
+      tags:
+        - orderItems
+      operationId: updateOrderItem
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/pathOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItemUpdateBody'
+      responses:
+        '200':
+          description: OrderItem updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders/transactions:
+    post:
+      summary: Create a transaction
+      tags:
+        - transactions
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+            examples:
+              transaction:
+                $ref: '#/components/examples/transaction'
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get transactions list
+      tags:
+        - transactions
+      operationId: getTransactions
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+        - $ref: '#/components/parameters/fromDate'
+        - $ref: '#/components/parameters/toDate'
+        - name: isReverse
+          description: Limit results to reverse transactions
+          in: query
+          schema:
+            type: boolean
+        - name: status
+          description: Limit results to specific status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - $ref: '#/components/parameters/paginationInclude'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated transactions list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete transactions
+      tags:
+        - transactions
+      operationId: deleteTransactions
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Transactions deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /orders/transactions/{id}:
+    get:
+      summary: Get a transaction
+      tags:
+        - transactions
+      operationId: getTransaction
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a transaction
+      tags:
+        - transactions
+      operationId: updateTransaction
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdateBody'
+            examples:
+              transaction:
+                $ref: '#/components/examples/transaction'
+      responses:
+        '200':
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /ratings:
+    post:
+      summary: Create a rating
+      tags:
+        - ratings
+      operationId: createRating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rating'
+            examples:
+              rating:
+                $ref: '#/components/examples/rating'
+      responses:
+        '201':
+          description: Rating created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get ratings list
+      tags:
+        - ratings
+      operationId: getRatings
+      parameters:
+        - $ref: '#/components/parameters/ratingTypes'
+        - $ref: '#/components/parameters/salonId'
+        - $ref: '#/components/parameters/employeeId'
+        - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/ratingSortBy'
+        - $ref: '#/components/parameters/ratingIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated ratings list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete ratings
+      tags:
+        - ratings
+      operationId: deleteRatings
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Ratings deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /ratings/{id}:
+    get:
+      summary: Get a rating
+      tags:
+        - ratings
+      operationId: getRating
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/ratingInclude'
+      responses:
+        '200':
+          description: Rating details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a rating
+      tags:
+        - ratings
+      operationId: updateRating
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingUpdateBody'
+            examples:
+              rating:
+                $ref: '#/components/examples/rating'
+      responses:
+        '200':
+          description: Rating updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /banners:
+    post:
+      summary: Create a banner
+      tags:
+        - banners
+      operationId: createBanner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Banner'
+            examples:
+              banner:
+                $ref: '#/components/examples/banner'
+      responses:
+        '201':
+          description: Banner created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Banner'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get banners list
+      tags:
+        - banners
+      operationId: getBanners
+      parameters:
+        - $ref: '#/components/parameters/applicableSex'
+        - name: actionType
+          description: Limit results of specific actionType
+          in: query
+          schema:
+            $ref: '#/components/schemas/BannerActionType'
+        - $ref: '#/components/parameters/bannerIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated banners list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Banner'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete banners
+      tags:
+        - banners
+      operationId: deleteBanners
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Banners deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /banners/{id}:
+    get:
+      summary: Get a banner
+      tags:
+        - banners
+      operationId: getBanner
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Banner details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Banner'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /coupons:
+    post:
+      summary: Create a coupon
+      tags:
+        - coupons
+      operationId: createCoupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Coupon'
+            examples:
+              coupon:
+                $ref: '#/components/examples/coupon'
+      responses:
+        '201':
+          description: Coupon created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Coupon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Get coupons list
+      tags:
+        - coupons
+      operationId: getCoupons
+      parameters:
+        - $ref: '#/components/parameters/couponCode'
+        - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/salonId'
+        - $ref: '#/components/parameters/couponIncludeWithPagination'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: Paginated coupons list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedListSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Coupon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete coupons
+      tags:
+        - coupons
+      operationId: deleteCoupons
+      parameters:
+        - $ref: '#/components/parameters/deleteIds'
+      responses:
+        '200':
+          description: Coupons deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiObjectOperationSuccessResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /coupons/{id}:
+    get:
+      summary: Get a coupon
+      tags:
+        - coupons
+      operationId: getCoupon
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/couponInclude'
+      responses:
+        '200':
+          description: Coupon details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Coupon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      summary: Update a coupon
+      tags:
+        - coupons
+      operationId: updateCoupon
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponUpdateBody'
+            examples:
+              coupon:
+                $ref: '#/components/examples/coupon'
+      responses:
+        '201':
+          description: Coupon updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SingleSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Coupon'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+
+
+components:
+  parameters:
+    id:
+      name: id
+      description: Resource id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    idIncludingZero:
+      name: id
+      description: Resource id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+    parentId:
+      name: parentId
+      description: Filter by resource parent id. Value `0` is interpreted as `null`.
+      in: query
+      schema:
+        $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+    deleteIds:
+      name: ids
+      description: List of ids to delete
+      in: query
+      required: true
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    categoryIds:
+      name: categoryIds
+      description: Limit result to matching category ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    designationIds:
+      name: designationIds
+      description: Limit result to matching employee designation ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    fromDate:
+      name: fromDate
+      description: Limit results after date
+      in: query
+      schema:
+        $ref: '#/components/schemas/DateTime'
+    toDate:
+      name: toDate
+      description: Limit results before date
+      in: query
+      schema:
+        $ref: '#/components/schemas/DateTime'
+    salonId:
+      name: salonId
+      description: Limit results to specific salon id
+      in: query
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    pathOrderId:
+      name: orderId
+      description: Limit results to specific order id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    orderId:
+      name: orderId
+      description: Limit results to specific order id
+      in: query
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    createdAt:
+      name: createdAt
+      description: Limit results after createdAt
+      in: query
+      schema:
+        $ref: '#/components/schemas/DateTime'
+    appointmentStatus:
+      name: status
+      description: Limit results with specific status
+      in: query
+      schema:
+        $ref: '#/components/schemas/AppointmentStatus'
+    employeeId:
+      name: employeeId
+      description: Limit results to specific employee id
+      in: query
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    employeeIds:
+      name: employeeIds
+      description: Limit result to matching employee ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    customerId:
+      name: customerId
+      description: Limit results to specific customer id
+      in: query
+      schema:
+        $ref: '#/components/schemas/IntegerId'
+    ratingTypes:
+      name: types
+      description: Limit results matching to provided rating types
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/RatingType'
+    ratingSortBy:
+      name: sortBy
+      description: Sort results by provided field
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - '-starCount'
+            - starCount
+    salonIds:
+      name: salonIds
+      description: Limit result to matching salon ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    servicesIds:
+      name: servicesIds
+      description: Limit result to matching service ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    optedServicesIds:
+      name: optedServicesIds
+      description: Limit result to matching optedServices ids
+      in: query
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/IntegerIds'
+    applicableSex:
+      name: applicableSex
+      description: Limit results relating to a specific sex
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApplicableSex'
+    serviceType:
+      name: type
+      description: Limit results to specific service type
+      in: query
+      schema:
+        $ref: '#/components/schemas/ServiceType'
+    styles:
+      name: styles
+      description: List of service style types
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/ServiceStyleType'
+    mimeTypes:
+      name: mimeTypes
+      description: Limit result set to specified mime types
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/MimeType'
+    timeSlotAvailabilities:
+      name: availabilities
+      description: Limit results to with matching availabilities
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/TimeSlotAvailability'
+    couponCode:
+      name: code
+      description: Limit results matching coupon code
+      in: query
+      schema:
+        $ref: '#/components/schemas/ShortText'
+    appointmentInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - appointmentSlots
+    appointmentIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - appointmentSlots
+            - _pagination.total
+    bannerIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - image
+            - _pagination.total
+    filesCollectionsIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - items
+            - _pagination.total
+    paginationInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+          - _pagination.total
+    searchInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - image
+        default: [image]
+    serviceInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - categories
+    serviceIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - categories
+            - image
+            - _pagination.total
+    orderInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - items
+    orderIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - items
+            - _pagination.total
+    optedServiceIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - service
+            - averageDuration
+            - startPrice
+            - _pagination.total
+    ratingInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - review
+    ratingIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - review
+            - _pagination.total
+    couponInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - restrictions
+    couponIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - restrictions
+            - _pagination.total
+    userIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - profile
+            - _pagination.total
+    employeeIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - profile
+            - averageRating
+            - optedServices
+            - _pagination.total
+    childrenInclude:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - children
+    serviceCategoryIncludeWithPagination:
+      name: include
+      description: Get extra fields in result
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - children
+            - image
+            - _pagination.total
+    merchantInclude:
+      name: include
+      description: List of extra fields to include in response
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - profile
+            - salons
+    merchantIncludeWithPagination:
+      name: include
+      description: List of extra fields to include in response
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - profile
+            - salons
+            - _pagination.total
+    salonInclude:
+      name: include
+      description: List of extra fields to include in response
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - address
+            - employees
+            - coverImage
+            - imageGallery
+            - salonCategories
+            - serviceCategories
+            - optedServices
+            - startPrice
+            - averageRating
+            - ratingsCount
+            - reviewsCount
+    salonIncludeWithPagination:
+      name: include
+      description: List of extra fields to include in response
+      in: query
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          enum:
+            - address
+            - employees
+            - coverImage
+            - imageGallery
+            - salonCategories
+            - serviceCategories
+            - optedServices
+            - startPrice
+            - averageRating
+            - ratingsCount
+            - reviewsCount
+            - _pagination.total
+    customerLatLong:
+      name: customerLatLong
+      description: Latitude and Longitude for filtering nearby.
+      in: query
+      style: form
+      explode: false
+      allowReserved: true
+      schema:
+        type: array
+        items:
+          type: string
+          format: regex
+          pattern: '^-?\d{1,3}\.\d{4,10}$'
+        minItems: 2
+        maxItems: 2
+    nearByDistance:
+      name: nearByDistance
+      description: Distance in meters for nearby lookup
+      in: query
+      schema:
+        type: number
+        minimum: 1
+        maximum: 100000
+        default: 12000
+    page:
+      name: page
+      description: Current page no. for pagination
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    perPage:
+      name: perPage
+      description: No. of records in paginated list
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/SingleSuccessResponse'
+              - $ref: '#/components/schemas/ListSuccessResponse'
+    '204':
+      description: No content
+    '400':
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '404':
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '500':
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    PositiveIntegerIncludingZero:
+      type: integer
+      minimum: 0
+    IntegerId:
+      type: integer
+      minimum: 1
+    IntegerIds:
+      type: array
+      items:
+        $ref: '#/components/schemas/IntegerId'
+      minItems: 1
+    ShortText:
+      type: string
+      minLength: 2
+      maxLength: 64
+    MediumText:
+      type: string
+      minLength: 2
+      maxLength: 255
+    StarCount:
+      type: integer
+      minimum: 1
+      maximum: 5
+    RatingAverage:
+      type: number
+      minimum: 1
+      maximum: 5
+    Money:
+      type: number
+      format: float
+      minimum: 0
+    Mobile:
+      type: string
+      format: regex
+      pattern: '^[6-9]\d{9}$'
+    OTP:
+      type: string
+      format: regex
+      pattern: '^\d{6}$'
+    DateTime:
+      type: string
+      format: date-time
+      description: ISO 8601 compliant date time
+    FileType:
+      enum:
+        - image
+    MimeType:
+      enum:
+        - image/jpeg
+        - image/png
+        - image/gif
+        - image/webp
+        - image/svg+xml
+    BannerActionType:
+      enum:
+        - salon
+        - webview
+        - other
+    Sex:
+      enum:
+        - male
+        - female
+        - other
+    ApplicableSex:
+      enum:
+        - male
+        - female
+        - other
+        - unisex
+        - all
+    Role:
+      enum:
+        - customer
+        - merchant
+        - employee
+        - admin
+    ServiceStyleType:
+      enum:
+        - trending
+        - retro
+        - modern
+        - indian
+        - western
+    RestrictionType:
+      enum:
+        - only
+        - include
+        - exclude
+    TimeSlotAvailability:
+      enum:
+        - available
+        - occupied
+        - temporaryUnavailable
+        - unavailable
+    TransactionChannel:
+      enum:
+        - cash
+        - digitalWallet
+        - upi
+        - card
+    TransactionStatus:
+      enum:
+        - pending
+        - completed
+        - failed
+    DiscountType:
+      enum:
+        - flat
+        - percent
+    RatingType:
+      enum:
+        - overall
+        - service
+        - cleanliness
+        - staffBehaviour
+        - valueForMoney
+    BankAccountType:
+      enum:
+        - savings
+        - current
+    AddressType:
+      enum:
+        - residential
+        - commercial
+    ServiceType:
+      enum:
+        - standard
+        - additional
+    SalonCategorizationCriteria:
+      enum:
+        - top
+        - popular
+    EntityStatus:
+      enum:
+        - created
+        - verified
+        - disabled
+        - trashed
+    PaymentStatus:
+      enum:
+        - pending
+        - paid
+        - refunded
+        - failed
+    OrderStatus:
+      enum:
+        - created
+        - fulfilling
+        - fulfilled
+        - rejected
+    OptedServiceAvailability:
+      enum:
+        - available
+        - temporaryAvailable
+        - unavailable
+    ServiceableCity:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        city:
+          type: string
+        state:
+          type: string
+      required:
+        - city
+      example:
+        city: Surat
+        state: Gujarat
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 64
+        expiresAt:
+          $ref: '#/components/schemas/DateTime'
+      required:
+        - token
+    AuthToken:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/IntegerId'
+        roleUserId:
+          $ref: '#/components/schemas/IntegerId'
+        role:
+          $ref: '#/components/schemas/Role'
+        accessToken:
+          $ref: '#/components/schemas/Token'
+        refreshToken:
+          $ref: '#/components/schemas/Token'
+    OTPData:
+      type: object
+      properties:
+        otp:
+          type: string
+        expiresAt:
+          type: string
+      required:
+        - otp
+        - expiresAt
+    File:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        name:
+          allOf:
+            - $ref: '#/components/schemas/MediumText'
+          readOnly: true
+        type:
+          allOf:
+            - $ref: '#/components/schemas/FileType'
+          readOnly: true
+        title:
+          $ref: '#/components/schemas/MediumText'
+        mimeType:
+          allOf:
+            - $ref: '#/components/schemas/MimeType'
+          readOnly: true
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        thumbnailURL:
+          type: string
+          format: uri
+          readOnly: true
+        updatedAt:
+          $ref: '#/components/schemas/DateTime'
+      required:
+        - title
+        - type
+        - url
+    FilesCollection:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        title:
+          $ref: '#/components/schemas/MediumText'
+        description:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+          readOnly: true
+        itemsIds:
+          allOf:
+            - $ref: '#/components/schemas/IntegerIds'
+          writeOnly: true
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+      required:
+        - itemsIds
+    UserUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        firstName:
+          $ref: '#/components/schemas/ShortText'
+        lastName:
+          $ref: '#/components/schemas/ShortText'
+        gender:
+          $ref: '#/components/schemas/Sex'
+        mobile:
+          $ref: '#/components/schemas/Mobile'
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          writeOnly: true
+        email:
+          type: string
+          format: email
+        role:
+          allOf:
+            - $ref: '#/components/schemas/Role'
+          readOnly: true
+        profileImage:
+          allOf:
+            - $ref: '#/components/schemas/File'
+          readOnly: true
+        profileImageId:
+          $ref: '#/components/schemas/IntegerId'
+    User:
+      allOf:
+        - $ref: '#/components/schemas/UserUpdateBody'
+      required:
+        - firstName
+        - gender
+        - mobile
+    BankAccountUpdateBody:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+        accountHolderName:
+          type: string
+        type:
+          $ref: '#/components/schemas/BankAccountType'
+        bankName:
+          type: string
+        branchName:
+          type: string
+        ifsc:
+          type: string
+          format: regex
+          pattern: '^[A-Z]{4}[0][A-Z0-9]{6}$'
+    BankAccount:
+      allOf:
+        - $ref: '#/components/schemas/BankAccountUpdateBody'
+      required:
+        - accountHolderName
+        - bankName
+        - branchName
+        - ifsc
+    Merchant:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            userId:
+              allOf:
+                - $ref: '#/components/schemas/IntegerId'
+              readOnly: true
+            aadhar:
+              type: string
+              format: regex
+              pattern: '^\d{12}$'
+          required:
+            - lastName
+            - email
+            - aadhar
+    AddressUpdateBody:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/MediumText'
+        type:
+          $ref: '#/components/schemas/AddressType'
+        line1:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        countryCode:
+          enum:
+            - IN
+        postCode:
+          type: string
+          format: regex
+          pattern: '^\d{6}$'
+        latitude:
+          type: string
+          format: regex
+          pattern: '^-?\d{1,2}\.\d{4,10}$'
+        longitude:
+          type: string
+          format: regex
+          pattern: '^-?\d{1,3}\.\d{4,10}$'
+        phone:
+          type: string
+    Address:
+      allOf:
+        - $ref: '#/components/schemas/AddressUpdateBody'
+      required:
+        - type
+        - line1
+        - city
+        - state
+    SalonCategory:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        salonId:
+          $ref: '#/components/schemas/IntegerId'
+        criteria:
+          $ref: '#/components/schemas/SalonCategorizationCriteria'
+    SalonUpdateBody:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/MediumText'
+        about:
+          type: string
+        applicableSex:
+          $ref: '#/components/schemas/ApplicableSex'
+        openHours:
+          type: string
+        coverImage:
+          allOf:
+            - $ref: '#/components/schemas/File'
+          readOnly: true
+        coverImageId:
+          $ref: '#/components/schemas/IntegerId'
+        imageGallery:
+          allOf:
+            - $ref: '#/components/schemas/FilesCollection'
+          readOnly: true
+        imageGalleryId:
+          $ref: '#/components/schemas/IntegerId'
+        website:
+          type: string
+          format: url
+        address:
+          $ref: '#/components/schemas/AddressUpdateBody'
+        addressId:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        pan:
+          type: string
+          format: regex
+          pattern: '^[A-Z]{3}[ABCFGHLJPTF]{1}[A-Z]{1}[0-9]{4}[A-Z]{1}$'
+        gst:
+          type: string
+          format: regex
+          pattern: '^[0-9]{2}[A-Z]{3}[ABCFGHLJPTF]{1}[A-Z]{1}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$'
+        ownerId:
+          $ref: '#/components/schemas/IntegerId'
+        bankAccount:
+          $ref: '#/components/schemas/BankAccountUpdateBody'
+        bankAccountId:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        salonCategories:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/SalonCategory'
+              - type: object
+                properties:
+                  salonId:
+                    readOnly: true
+        optedServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptedService'
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/EntityStatus'
+    Salon:
+      allOf:
+        - $ref: '#/components/schemas/SalonUpdateBody'
+        - type: object
+          properties:
+            address:
+              $ref: '#/components/schemas/Address'
+            bankAccount:
+              $ref: '#/components/schemas/BankAccount'
+      required:
+        - name
+        - about
+        - applicableSex
+        - openHours
+        - ownerId
+        - address
+    SalonAggregation:
+      type: object
+      properties:
+        avgRating:
+          type: number
+          minimum: 1
+          readOnly: true
+        ratingsCount:
+          allOf:
+            - $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+          readOnly: true
+        reviewsCount:
+          allOf:
+            - $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+          readOnly: true
+    SalonSummary:
+      type: object
+      properties:
+        salon:
+          $ref: '#/components/schemas/Salon'
+        appointments:
+          $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+        orders:
+          type: object
+          properties:
+            new:
+              $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+            total:
+              allOf:
+                - $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+              default: 0
+        customers:
+          type: object
+          properties:
+            new:
+              $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+            total:
+              $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+        ratings:
+          type: object
+          properties:
+            counts:
+              type: object
+              properties:
+                fiveStar:
+                  $ref: '#/components/schemas/StarCount'
+                fourStar:
+                  $ref: '#/components/schemas/StarCount'
+                threeStar:
+                  $ref: '#/components/schemas/StarCount'
+                twoStar:
+                  $ref: '#/components/schemas/StarCount'
+                oneStar:
+                  $ref: '#/components/schemas/StarCount'
+              required:
+                - fiveStar
+                - fourStar
+                - threeStar
+                - twoStar
+                - oneStar
+            averages:
+              type: object
+              properties:
+                overall:
+                  $ref: '#/components/schemas/RatingAverage'
+                service:
+                  $ref: '#/components/schemas/RatingAverage'
+                cleanliness:
+                  $ref: '#/components/schemas/RatingAverage'
+                staffBehaviour:
+                  $ref: '#/components/schemas/RatingAverage'
+                valueForMoney:
+                  $ref: '#/components/schemas/RatingAverage'
+          required:
+            - counts
+            - averages
+    Service:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        name:
+          $ref: '#/components/schemas/MediumText'
+        type:
+          $ref: '#/components/schemas/ServiceType'
+        applicableSex:
+          $ref: '#/components/schemas/ApplicableSex'
+        description:
+          type: string
+        defaultPrice:
+          $ref: '#/components/schemas/Money'
+        defaultDurationSeconds:
+          type: integer
+          minimum: 60
+        image:
+          allOf:
+            - $ref: '#/components/schemas/File'
+          readOnly: true
+        imageId:
+          $ref: '#/components/schemas/IntegerId'
+        styles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceStyleType'
+        categoryIds:
+          allOf:
+            - $ref: '#/components/schemas/IntegerIds'
+            - writeOnly: true
+      required:
+        - name
+        - type
+        - applicableSex
+    OptedServiceUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        salonId:
+          $ref: '#/components/schemas/IntegerId'
+        service:
+          allOf:
+            - $ref: '#/components/schemas/Service'
+          readOnly: true
+        serviceId:
+          $ref: '#/components/schemas/IntegerId'
+        price:
+          $ref: '#/components/schemas/Money'
+        durationSeconds:
+          type: integer
+          minimum: 60
+        availability:
+          $ref: '#/components/schemas/OptedServiceAvailability'
+    OptedService:
+      allOf:
+        - $ref: '#/components/schemas/OptedServiceUpdateBody'
+      required:
+        - serviceId
+        - salonId
+        - price
+        - durationSeconds
+    ServicePackage:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        image:
+          $ref: '#/components/schemas/File'
+        imageId:
+          type: integer
+          minimum: 1
+        optedServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptedService'
+        updatedAt:
+          $ref: '#/components/schemas/DateTime'
+      required:
+        - name
+        - description
+        - services
+    ServiceCategory:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        name:
+          $ref: '#/components/schemas/MediumText'
+        applicableSex:
+          $ref: '#/components/schemas/ApplicableSex'
+        image:
+          allOf:
+            - $ref: '#/components/schemas/File'
+          readOnly: true
+        imageId:
+          $ref: '#/components/schemas/IntegerId'
+        bgColor:
+          type: string
+          format: regex
+          pattern: '^#([0-9a-fA-F]{3}){1,2}$'
+        parent:
+          allOf:
+            - $ref: '#/components/schemas/ServiceCategory'
+          readOnly: true
+        parentId:
+          $ref: '#/components/schemas/IntegerId'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceCategory'
+          readOnly: true
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+      required:
+        - name
+        - applicableSex
+        - bgColor
+    TimeSlot:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+            - readOnly: true
+        employeeId:
+          $ref: '#/components/schemas/IntegerId'
+        start:
+          $ref: '#/components/schemas/DateTime'
+        end:
+          $ref: '#/components/schemas/DateTime'
+        availability:
+          $ref: '#/components/schemas/TimeSlotAvailability'
+        note:
+          type: string
+      required:
+        - employeeId
+        - start
+        - end
+        - availability
+    AppointmentStatus:
+      enum:
+        - upcoming
+        - ongoing
+        - completed
+        - cancelled
+        - rejected
+    AppointmentUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        appointmentId:
+          $ref: '#/components/schemas/ShortText'
+        customer:
+          allOf:
+            - $ref: '#/components/schemas/Customer'
+          readOnly: true
+        customerId:
+          $ref: '#/components/schemas/IntegerId'
+        salonId:
+          $ref: '#/components/schemas/IntegerId'
+        startsAt:
+          $ref: '#/components/schemas/DateTime'
+        endsAt:
+          $ref: '#/components/schemas/DateTime'
+        appointmentSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppointmentSlot'
+          minItems: 1
+        otp:
+          allOf:
+            - $ref: '#/components/schemas/OTP'
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/AppointmentStatus'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+    Appointment:
+      allOf:
+        - $ref: '#/components/schemas/AppointmentUpdateBody'
+      required:
+        - startsAt
+        - endsAt
+        - customerId
+        - salonId
+    AppointmentSlot:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        appointmentId:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        optedServiceId:
+          $ref: '#/components/schemas/IntegerId'
+        employeeId:
+          $ref: '#/components/schemas/IntegerId'
+        startsAt:
+          $ref: '#/components/schemas/DateTime'
+        endsAt:
+          $ref: '#/components/schemas/DateTime'
+        note:
+          type: string
+      required:
+        - appointmentId
+        - optedServiceId
+    RatingUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/RatingType'
+        starCount:
+          $ref: '#/components/schemas/StarCount'
+        isVerified:
+          type: boolean
+        parent:
+          allOf:
+            - $ref: '#/components/schemas/Rating'
+          readOnly: true
+        parentId:
+          $ref: '#/components/schemas/IntegerId'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+          readOnly: true
+        review:
+          $ref: '#/components/schemas/Review'
+        reviewId:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        customerId:
+          $ref: '#/components/schemas/IntegerId'
+        orderItemId:
+          $ref: '#/components/schemas/IntegerId'
+        status:
+          $ref: '#/components/schemas/EntityStatus'
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+    Rating:
+      allOf:
+        - $ref: '#/components/schemas/RatingUpdateBody'
+        - type: object
+          properties:
+            review:
+              $ref: '#/components/schemas/Review'
+      required:
+        - type
+        - starCount
+        - customerId
+        - orderItemId
+    Review:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        title:
+          $ref: '#/components/schemas/ShortText'
+        comment:
+          type: string
+        galleryId:
+          type: integer
+          minimum: 1
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+      required:
+        - comment
+    TransactionUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        transactionId:
+          $ref: '#/components/schemas/ShortText'
+        channel:
+          $ref: '#/components/schemas/TransactionChannel'
+        amount:
+          $ref: '#/components/schemas/Money'
+        orderId:
+          $ref: '#/components/schemas/IntegerId'
+        isReverse:
+          type: boolean
+        note:
+          type: string
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+    Transaction:
+      allOf:
+        - $ref: '#/components/schemas/TransactionUpdateBody'
+      required:
+        - channel
+        - amount
+        - orderId
+    OrderUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/ShortText'
+        appointmentId:
+          $ref: '#/components/schemas/IntegerId'
+        total:
+          $ref: '#/components/schemas/Money'
+        discount:
+          $ref: '#/components/schemas/Money'
+        tax:
+          $ref: '#/components/schemas/Money'
+        note:
+          type: string
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+          readOnly: true
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/OrderUpdateBody'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+      required:
+        - appointmentId
+        - total
+    OrderItemUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        orderId:
+          $ref: '#/components/schemas/IntegerId'
+        optedServiceId:
+          $ref: '#/components/schemas/IntegerId'
+        employeeId:
+          $ref: '#/components/schemas/IntegerId'
+        price:
+          $ref: '#/components/schemas/Money'
+        note:
+          type: string
+    OrderItem:
+      allOf:
+        - $ref: '#/components/schemas/OrderItemUpdateBody'
+      required:
+        - optedServiceId
+        - price
+    CouponUpdateBody:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        code:
+          $ref: '#/components/schemas/ShortText'
+        description:
+          type: string
+        discountType:
+          $ref: '#/components/schemas/DiscountType'
+        amount:
+          $ref: '#/components/schemas/Money'
+        minPurchaseAmount:
+          $ref: '#/components/schemas/Money'
+        maxPurchaseAmount:
+          $ref: '#/components/schemas/Money'
+        individualUse:
+          type: boolean
+        usageLimit:
+          type: integer
+          minimum: 1
+        usageCount:
+          type: integer
+          minimum: 0
+          readOnly: true
+        expiresAt:
+          type: string
+          format: date-time
+        restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restriction'
+          uniqueItems: true
+        status:
+          $ref: '#/components/schemas/EntityStatus'
+        createdAt:
+          type: string
+          format: date-time
+    Coupon:
+      allOf:
+        - $ref: '#/components/schemas/CouponUpdateBody'
+      required:
+        - code
+        - discountType
+        - amount
+    Restriction:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/RestrictionType'
+        customerId:
+          $ref: '#/components/schemas/IntegerId'
+        salonId:
+          $ref: '#/components/schemas/IntegerId'
+        employeeId:
+          $ref: '#/components/schemas/IntegerId'
+        serviceId:
+          $ref: '#/components/schemas/IntegerId'
+        categoryId:
+          $ref: '#/components/schemas/IntegerId'
+        couponId:
+          $ref: '#/components/schemas/IntegerId'
+      required:
+        - type
+    CustomerUpdateBody:
+      allOf:
+        - $ref: '#/components/schemas/UserUpdateBody'
+        - type: object
+          properties:
+            userId:
+              allOf:
+                - $ref: '#/components/schemas/IntegerId'
+              readOnly: true
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - $ref: '#/components/schemas/CustomerUpdateBody'
+    EmployeeDesignation:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        title:
+          $ref: '#/components/schemas/MediumText'
+        description:
+          type: string
+        applicableSex:
+          $ref: '#/components/schemas/ApplicableSex'
+        employees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+          readOnly: true
+      required:
+        - title
+        - applicableSex
+    Employee:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            userId:
+              allOf:
+                - $ref: '#/components/schemas/IntegerId'
+              readOnly: true
+            salonId:
+              $ref: '#/components/schemas/IntegerId'
+            designationId:
+              $ref: '#/components/schemas/IntegerId'
+            experienceYears:
+              type: integer
+              minimum: 0
+              maximum: 100
+            optedServices:
+              type: array
+              items:
+                $ref: '#/components/schemas/OptedService'
+              readOnly: true
+            optedServicesIds:
+              allOf:
+                - $ref: '#/components/schemas/IntegerIds'
+              writeOnly: true
+            updatedAt:
+              allOf:
+                - $ref: '#/components/schemas/DateTime'
+              readOnly: true
+          required:
+            - salonId
+            - designationId
+    Banner:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/IntegerId'
+          readOnly: true
+        image:
+          allOf:
+            - $ref: '#/components/schemas/File'
+          readOnly: true
+        imageId:
+          $ref: '#/components/schemas/IntegerId'
+        applicableSex:
+          $ref: '#/components/schemas/ApplicableSex'
+        actionType:
+          $ref: '#/components/schemas/BannerActionType'
+        resourceId:
+          $ref: '#/components/schemas/IntegerId'
+        resourceURI:
+          type: string
+          format: uri
+      required:
+        - imageId
+        - applicableSex
+        - actionType
+    Error:
+      type: object
+      properties:
+        code:
+          oneOf:
+            - type: number
+            - type: string
+        message:
+          type: string
+        data:
+          oneOf:
+            - type: object
+            - type: array
+              items: {}
+      required:
+        - message
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        perPage:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+      required:
+        - page
+        - perPage
+    JSONResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/JSONResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              default: true
+    SingleSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+          required:
+            - data
+    ListSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: {}
+          required:
+            - data
+    PaginatedListSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListSuccessResponse'
+        - type: object
+          properties:
+            _pagination:
+              $ref: '#/components/schemas/Pagination'
+          required:
+            - _pagination
+    PaginatedSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                salons:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Salon'
+                services:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Service'
+                _pagination:
+                  $ref: '#/components/schemas/Pagination'
+              required:
+                - salons
+                - services
+                - _pagination
+          required:
+            - data
+
+    MultiObjectOperationSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        data:
+          type: object
+          properties:
+            count:
+              $ref: '#/components/schemas/PositiveIntegerIncludingZero'
+          required:
+            - count
+      required:
+        - success
+        - data
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/JSONResponse'
+        - type: object
+          properties:
+            error:
+              $ref: '#/components/schemas/Error'
+          required:
+            - error
+
+  examples:
+    requestOTP:
+      value:
+        role: 'customer'
+        mobile: '9862898720'
+    passwordLogin:
+      value:
+        role: 'merchant'
+        mobile: '9862898720'
+        password: 'pa$$word'
+    otpLogin:
+      value:
+        role: 'customer'
+        mobile: '9876543210'
+        otp: '123456'
+    file:
+      value:
+        title: Some Image
+    filesCollection:
+      value:
+        title: Salon Gallery
+        description: This is an image gallery of a salon.
+        itemsIds: [1, 2, 3]
+    service:
+      value:
+        name: Hair Cut
+        type: standard
+        applicableSex: unisex
+        description: This is a best hair cut service.
+        defaultPrice: 30
+        defaultDurationSeconds: 3600
+        imageId: 1
+        styles: [trending, modern]
+        categoryIds: [1, 3]
+    serviceCategory:
+      value:
+        name: Hair Care
+        applicableSex: unisex
+        imageId: 1
+        bgColor: '#123456'
+    serviceableCities:
+      value:
+        - city: Bangalore
+          state: Karnataka
+        - city: Ahmedabad
+          state: Gujarat
+    merchant:
+      value:
+        firstName: Vinod
+        lastName: Sharma
+        gender: male
+        mobile: '9862898720'
+        password: pa$$word
+        email: vinod@sharma.com
+        profileImageId: 1
+        aadhar: '123456789012'
+    address:
+      value:
+        name: Modern Salon Main Address
+        type: commercial
+        line1: 93, Bamroli Road
+        line2: Krishna Nagar
+        city: Ahmedabad
+        state: Gujarat
+        postCode: '234208'
+        latitude: '21.1431'
+        longitude: '72.8431'
+    salon:
+      value:
+        name: Modern Salon
+        about: |
+          We are in business since 1969. We provide exceptional services.
+        applicableSex: unisex
+        openHours: 9AM-5PM
+        coverImageId: 1
+        imageGalleryId: 1
+        website: 'https://modernsalon.com'
+        pan: 'XAEPM2243P'
+        gst: '21XAEPM2243PRZ1'
+        address:
+          name: Modern Salon Main Address
+          type: commercial
+          line1: 93, Bamroli Road
+          line2: Krishna Nagar
+          city: Ahmedabad
+          state: Gujarat
+          postCode: '234208'
+          latitude: '21.1431'
+          longitude: '72.8431'
+        ownerId: 1
+        bankAccount:
+          accountNumber: '10402200170088'
+          accountHolderName: Modern Salon
+          type: current
+          bankName: Bank of Baroda
+          branchName: Main Surat Branch
+          ifsc: BOBA0001049
+        salonCategories:
+          - criteria: top
+    optedServices:
+      value:
+        - salonId: 1
+          serviceId: 1
+          price: 20
+          durationSeconds: 3600
+        - salonId: 2
+          serviceId: 2
+          price: 30
+          durationSeconds: 3600
+    timeSlot:
+      value:
+        employeeId: 1
+        start: '2022-08-15T13:26:34.769Z'
+        end: '2022-08-15T19:26:34.769Z'
+        availability: available
+    coupon:
+      value:
+        code: OFF30
+        description: 30% off on min spend value of 2000.
+        discountType: percent
+        amount: 30
+        minPurchaseAmount: 2000
+        individualUse: true
+        usageLimit: 20
+        expiresAt: '2022-09-15T19:26:34.769Z'
+        restrictions:
+          - type: include
+            customerId: 1
+          - type: include
+            customerId: 2
+    banner:
+      value:
+        imageId: 1
+        applicableSex: unisex
+        actionType: salon
+        resourceId: 1
+    employeeDesignation:
+      value:
+        title: Hair Stylist
+        description: Person responsible for styling hairs.
+        applicableSex: unisex
+    employee:
+      value:
+        firstName: Joy
+        lastName: Sharma
+        gender: male
+        mobile: '9862838720'
+        password: pa$$word
+        email: joy@sharma.com
+        profileImageId: 1
+        salonId: 1
+        designationId: 1
+        experienceYears: 5
+        optedServicesIds: [1, 2]
+    customer:
+      value:
+        firstName: Loy
+        lastName: Sharma
+        gender: male
+        mobile: '9362838720'
+        password: pa$$word
+        email: loy@sharma.com
+        profileImageId: 1
+    customerUpdate:
+      value:
+        firstName: Loy
+        lastName: Sharma
+        gender: male
+        mobile: '9362838720'
+        password: pa$$word
+        email: loy@sharma.com
+        profileImageId: 1
+        wishListedSalonIds:
+          add: [ 1 ]
+          remove: [ 1 ]
+    appointment:
+      value:
+        appointmentId: AP23423432233
+        customerId: 1
+        salonId: 1
+        startsAt: '2022-08-15T19:26:34.769Z'
+        endsAt: '2022-08-15T22:26:34.739Z'
+        appointmentSlots:
+          - optedServiceId: 1
+            employeeId: 1
+            startsAt: '2022-08-15T19:26:34.769Z'
+            endsAt: '2022-08-15T20:26:34.769Z'
+            note: 'Some note'
+          - optedServiceId: 2
+            employeeId: 1
+            startsAt: '2022-08-15T21:26:34.769Z'
+            endsAt: '2022-08-15T22:26:34.769Z'
+
+    rating:
+      value:
+        type: overall
+        starCount: 4
+        review:
+          title: Best Service
+          comment: This was the best service.
+          galleryId: 1
+        customerId: 1
+        orderItemId: 1
+    order:
+      value:
+        appointmentId: 1
+        total: 120
+        discount: 10
+        tax: 10
+    orderItem:
+      value:
+        optedServiceId: 1
+        employeeId: 1
+        price: 20
+    transaction:
+      value:
+        transactionId: TR234455321
+        channel: cash
+        amount: 100
+        orderId: 1
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

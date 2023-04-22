@@ -1,0 +1,46 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented libs
+lib-cov
+
+# Coverage reports
+coverage
+
+# Dependency directory
+node_modules
+
+# Environment variables
+.env
+
+# Editors
+.idea
+.vscode
+*.iml
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Built ts files
+dist/**/*
+
+# Media uploads
+uploads/images
+uploads/images/thumbnails
+
+# yarn.lock
+yarn.lock
+
+# OAS Codegen
+gen
